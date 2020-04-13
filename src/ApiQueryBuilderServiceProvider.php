@@ -1,6 +1,6 @@
 <?php
 
-namespace Unlu\Laravel\Api;
+namespace Dv\Laravel\Api;
 
 use Illuminate\Support\ServiceProvider;
 

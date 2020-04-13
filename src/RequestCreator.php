@@ -1,8 +1,6 @@
 <?php 
 
-namespace Unlu\Laravel\Api;
-
-use Illuminate\Http\Request;
+namespace Dv\Laravel\Api;
 
 class RequestCreator
 {

@@ -1,6 +1,6 @@
 {
-    "name": "unlu/laravel-api-query-builder",
-    "description": "Laravel API Query Builder Package.",
+    "name": "dv/eloquent-api-query-builder",
+    "description": "Eloquent API Query Builder Package.",
     "type": "library",
     "license": "MIT",
     "keywords": ["laravel", "api"],
@@ -13,13 +13,12 @@
     "require": {
         "php": ">=5.4",
         "illuminate/support": ">=5.0.0",
-        "illuminate/database": ">=5.0.0",
-        "illuminate/http": ">=5.0.0"
+        "illuminate/database": ">=5.0.0"
     },
     "require-dev": {},
     "autoload": {
         "psr-4": {
-            "Unlu\\Laravel\\Api\\": "src"
+            "Dv\\Laravel\\Api\\": "src"
         }
     }
 }

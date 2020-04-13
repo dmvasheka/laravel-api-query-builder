@@ -1,19 +1,18 @@
 <?php
 
-namespace Unlu\Laravel\Api;
+namespace Dv\Laravel\Api;
 
 use Exception;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator as BasePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Traits\CapsuleManagerTrait;
 use Psr\Http\Message\ServerRequestInterface;
-use Unlu\Laravel\Api\Exceptions\UnknownColumnException;
-use Unlu\Laravel\Api\UriParser;
+use Dv\Laravel\Api\Exceptions\UnknownColumnException;
+use Dv\Laravel\Api\UriParser;
 
 class QueryBuilder
 {

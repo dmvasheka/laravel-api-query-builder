@@ -1,8 +1,7 @@
 <?php
 
-namespace Unlu\Laravel\Api;
+namespace Dv\Laravel\Api;
 
-use Illuminate\Http\Request;
 use Psr\Http\Message\ServerRequestInterface;
 
 class UriParser

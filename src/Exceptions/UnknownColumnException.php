@@ -1,6 +1,6 @@
 <?php
 
-namespace Unlu\Laravel\Api\Exceptions;
+namespace Dv\Laravel\Api\Exceptions;
 
 use Exception;
 
