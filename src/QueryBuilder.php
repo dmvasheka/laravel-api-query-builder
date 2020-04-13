@@ -3,12 +3,15 @@
 namespace Unlu\Laravel\Api;
 
 use Exception;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator as BasePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Traits\CapsuleManagerTrait;
+use Psr\Http\Message\ServerRequestInterface;
 use Unlu\Laravel\Api\Exceptions\UnknownColumnException;
 use Unlu\Laravel\Api\UriParser;
 
@@ -32,6 +35,8 @@ class QueryBuilder
 
     protected $relationColumns = [];
 
+    protected $relations = [];
+
     protected $includes = [];
 
     protected $groupBy = [];
@@ -44,19 +49,23 @@ class QueryBuilder
 
     protected $result;
 
-    public function __construct(Model $model, Request $request)
+    public function __construct(Model $model, ServerRequestInterface $request, $useDefaultSort = true)
     {
-        $this->orderBy = config('api-query-builder.orderBy');
+        if (empty($this->orderBy) && $useDefaultSort) {
+            $this->orderBy = [['column' => 'id','direction' => 'asc']];
+        }
+        //config('api-query-builder.orderBy');
 
-        $this->limit = config('api-query-builder.limit');
+        $this->limit = 15;//config('api-query-builder.limit');
 
-        $this->excludedParameters = array_merge($this->excludedParameters, config('api-query-builder.excludedParameters'));
+        $this->excludedParameters = array_merge($this->excludedParameters, []/*config('api-query-builder.excludedParameters')*/);
 
         $this->model = $model;
 
         $this->uriParser = new UriParser($request);
 
         $this->query = $this->model->newQuery();
+
     }
 
     public function build()
@@ -81,11 +90,37 @@ class QueryBuilder
 
         array_map([$this, 'addOrderByToQuery'], $this->orderBy);
 
-        $this->query->with($this->includes);
+        $this->query->with($this->relations);
 
         $this->query->select($this->columns);
 
         return $this;
+    }
+
+    public function withScopes(array $scopes)
+    {
+        array_walk($scopes, [$this, 'addScopesToQuery']);
+        return $this;
+    }
+
+    public function withScope($scope, $params = null)
+    {
+        call_user_func_array([$this, 'addScopesToQuery'], [$params, $scope]);
+        return $this;
+    }
+
+    private function addScopesToQuery($params, $scope)
+    {
+        if (! is_string($scope)) {
+            $scope = $params;
+            $params = [null];
+        }
+
+        if (! is_array($params)) {
+            $params[] = $params;
+        }
+
+        $this->query->{$scope}(...$params);
     }
 
     public function get()
@@ -105,13 +140,31 @@ class QueryBuilder
             throw new Exception("You can't use unlimited option for pagination", 1);
         }
 
-        $result = $this->basePaginate($this->limit);
+        $result = $this->basePaginate($this->limit, '*', 'page', $this->page);
 
         if ($this->hasAppends()) {
             $result = $this->addAppendsToModel($result);
         }
 
         return $result;
+    }
+
+    public function paginateWithFilter(callable $callback)
+    {
+        if (!$this->hasLimit()) {
+            throw new Exception("You can't use unlimited option for pagination", 1);
+        }
+
+        return $this->basePaginate($this->limit, '*', 'page', $this->page, $callback);
+    }
+
+    public function paginateWithRelationSort($relation, $field, $direction = 'asc')
+    {
+        if (!$this->hasLimit()) {
+            throw new Exception("You can't use unlimited option for pagination", 1);
+        }
+
+        return $this->basePaginate($this->limit, '*', 'page', $this->page, null, [$relation, $field, $direction]);
     }
 
     public function lists($value, $key)
@@ -126,6 +179,10 @@ class QueryBuilder
         $constantParameters = $this->uriParser->constantParameters();
 
         array_map([$this, 'prepareConstant'], $constantParameters);
+
+        if ($this->hasIncludes()) {
+            $this->fixRelationPagination();
+        }
 
         if ($this->hasIncludes() && $this->hasRelationColumns()) {
             $this->fixRelationColumns();
@@ -182,6 +239,18 @@ class QueryBuilder
         list($key, $column) = explode('.', $keyAndColumn);
 
         $this->relationColumns[$key][] = $column;
+    }
+
+    private function fixRelationPagination()
+    {
+        $callback = [$this, 'removeRelationPagingParams'];
+        array_map($callback, $this->includes);
+    }
+
+    private function removeRelationPagingParams($include)
+    {
+        $params = explode(':', $include);
+        $this->relations[] = $params[0];
     }
 
     private function fixRelationColumns()
@@ -271,6 +340,10 @@ class QueryBuilder
         if ($this->isExcludedParameter($key)) {
             return;
         }
+        /** @var string $type */
+        if($type == 'Relation') {
+            return $this->addRelationWhereToQuery($key, $operator, $value);
+        }
 
         if ($this->hasCustomFilter($key)) {
             /** @var string $type */
@@ -297,6 +370,17 @@ class QueryBuilder
                 $this->query->where($key, $operator, $value);
             }
         }
+    }
+
+    private function addRelationWhereToQuery($key, $operator, $value)
+    {
+        list($relation, $field) = explode('.', $key);
+        if(!$this->hasRelationship($relation)) {
+            throw UnknownRelationshipException::relationshipName($relation);
+        }
+        $this->query->whereHas($relation, function($q) use ($field, $operator, $value){
+            return $q->where($field, $operator, $value);
+        });
     }
 
     private function addOrderByToQuery($order)
@@ -364,9 +448,14 @@ class QueryBuilder
         return (count($this->relationColumns) > 0);
     }
 
+    private function hasRelationship($relation)
+    {
+        return in_array($relation, $this->includes);
+    }
+
     private function hasTableColumn($column)
     {
-        return (Schema::hasColumn($this->model->getTable(), $column));
+        return Manager::schema()->hasColumn($this->model->getTable(), $column);//(Schema::hasColumn($this->model->getTable(), $column));
     }
 
     private function hasCustomFilter($key)
@@ -407,24 +496,34 @@ class QueryBuilder
      *
      * @throws \InvalidArgumentException
      */
-    private function basePaginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+    private function basePaginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, callable $callback = null, $relationSortParam = [])
     {
         $page = $page ?: BasePaginator::resolveCurrentPage($pageName);
 
         $perPage = $perPage ?: $this->model->getPerPage();
 
-        if (method_exists($this->query, 'toBase')) {
-            $query = $this->query->toBase();
-        } else {
-            $query = $this->query->getQuery();
-        }
+        $query = $this->query->getQuery();
 
         $total = $query->getCountForPagination();
 
         $results = $total ? $this->query->forPage($page, $perPage)->get($columns) : new Collection;
 
+        if(isset($callback)) {
+            $results = $results->filter($callback);
+        }
+
+        if(!empty($relationSortParam)) {
+            [$relation, $field, $direction] = $relationSortParam;
+            $results = $results->sortBy(function ($prod) use ($relation, $field, $direction){
+                return $prod->{$relation}->{$field} ?? 0;
+            });
+            if ($direction === 'desc') {
+                $results = $results->reverse();
+            }
+        }
+
         return (new Paginator($results, $total, $perPage, $page, [
-            'path' => BasePaginator::resolveCurrentPath(),
+            'path' => $this->uriParser->getPath(),
             'pageName' => $pageName,
         ]))->setQueryUri($this->uriParser->getQueryUri());
     }

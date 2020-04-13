@@ -3,6 +3,7 @@
 namespace Unlu\Laravel\Api;
 
 use Illuminate\Http\Request;
+use Psr\Http\Message\ServerRequestInterface;
 
 class UriParser
 {
@@ -28,13 +29,11 @@ class UriParser
 
     protected $queryParameters = [];
 
-    public function __construct(Request $request)
+    public function __construct(ServerRequestInterface $request)
     {
         $this->request = $request;
-
-        $this->uri = $request->getRequestUri();
-
-        $this->setQueryUri($this->uri);
+        $this->uri = $request->getUri()->getPath();
+        $this->setQueryUri($request->getUri()->getQuery());
 
         if ($this->hasQueryUri()) {
             $this->setQueryParameters($this->queryUri);
@@ -75,12 +74,18 @@ class UriParser
             }
         );
     }
+    
+    public function getPath()
+    {
+        return $this->request->getUri()->getHost();
+    }
 
     private function setQueryUri($uri)
     {
-        $explode = explode('?', $uri);
+        /*$explode = explode('?', $uri);
 
-        $this->queryUri = (isset($explode[1])) ? rawurldecode($explode[1]) : null;
+        $this->queryUri = (isset($explode[1])) ? rawurldecode($explode[1]) : null;*/
+        $this->queryUri = (isset($uri)) ? rawurldecode($uri) : null;
     }
 
     private function setQueryParameters($queryUri)
@@ -105,6 +110,7 @@ class UriParser
 
     private function appendQueryParameterAsBasicWhere($parameter)
     {
+        $type = 'Basic';
         preg_match(self::PATTERN, $parameter, $matches);
 
         $operator = $matches[0];
@@ -116,8 +122,12 @@ class UriParser
             $value = str_replace('*', '%', $value);
         }
 
+        if(!$this->isConstantParameter($key) && $this->isRelationQuery($key)) {
+            $type = 'Relation';
+        }
+
         $this->queryParameters[] = [
-            'type' => 'Basic',
+            'type' => $type,
             'key' => $key,
             'operator' => $operator,
             'value' => $value
@@ -178,6 +188,13 @@ class UriParser
     private function isLikeQuery($query)
     {
         $pattern = "/^\*|\*$/";
+
+        return (preg_match($pattern, $query, $matches));
+    }
+
+    private function isRelationQuery($query)
+    {
+        $pattern = "/([\.])/";
 
         return (preg_match($pattern, $query, $matches));
     }
