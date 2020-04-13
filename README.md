@@ -1,11 +1,3 @@
-# Announcement
-I need to improve myself on Python for my new job. So, I have not time to maintain the package.
-
-If you want to maintain the package, you can contact to me on Twitter (@selahattinunlu) and I can give you push access.
-
-Otherwise, this package won't maintained anymore.
-
-### English
 
 [1. Introduction](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Introduction)
 
@@ -25,22 +17,3 @@ Otherwise, this package won't maintained anymore.
 
 [9. How do exclude parameters from queries?](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/9.-How-do-exclude-parameters-from-queries%3F)
 
-### Türkçe
-
-[1. Nedir](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Nedir)
-
-[2. Kurulum](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Kurulum)
-
-[3. Kullanım](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Kullan%C4%B1m)
-
-[4. Diğer Kullanım Örnekleri](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Di%C4%9Fer-Kullan%C4%B1m-%C3%96rnekleri)
-
-[5. Custom Request Kullanımı](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Custom-Request-Kullan%C4%B1m%C4%B1)
-
-[6. Sabit Parametreler](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Sabit-Parametreler)
-
-[7. Methodlar](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/Methodlar)
-
-[8. Özel Filtre Oluşturma](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/%C3%96zel-Filtre-Olu%C5%9Fturma)
-
-[9. Sorgularda bazı parametreleri hariç tutmak](https://github.com/selahattinunlu/laravel-api-query-builder/wiki/9.-Sorgularda-baz%C4%B1-parametreleri-hari%C3%A7-tutmak)
