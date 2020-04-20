@@ -4,6 +4,7 @@ namespace Dv\Laravel\Api;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class UriParser
 {
@@ -136,7 +137,7 @@ class UriParser
 
     private function appendQueryParameterAsWhereIn($parameter, $key)
     {
-        if (str_contains($parameter, '!=')) {
+        if (Str::contains($parameter, '!=')) {
             $type = 'NotIn';
             $seperator = '!=';
         } else {
@@ -180,7 +181,7 @@ class UriParser
 
     public function hasQueryParameter($key)
     {
-        $keys = array_pluck($this->queryParameters, 'key');
+        $keys = Arr::pluck($this->queryParameters, 'key');
 
         return (in_array($key, $keys));
     }
