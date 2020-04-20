@@ -3,6 +3,7 @@
 namespace Dv\Laravel\Api;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Illuminate\Support\Arr;
 
 class UriParser
 {
@@ -51,7 +52,7 @@ class UriParser
 
     public function queryParameter($key)
     {
-        $keys = array_pluck($this->queryParameters, 'key');
+        $keys = Arr::pluck($this->queryParameters, 'key');
 
         $queryParameters = array_combine($keys, $this->queryParameters);
 
