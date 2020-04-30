@@ -13,6 +13,7 @@ use Illuminate\Support\Traits\CapsuleManagerTrait;
 use Psr\Http\Message\ServerRequestInterface;
 use Dv\Laravel\Api\Exceptions\UnknownColumnException;
 use Dv\Laravel\Api\UriParser;
+use Illuminate\Support\Str;
 
 class QueryBuilder
 {
@@ -466,12 +467,12 @@ class QueryBuilder
 
     private function setterMethodName($key)
     {
-        return 'set' . studly_case($key);
+        return 'set' . Str::studly($key);
     }
 
     private function customFilterName($key)
     {
-        return 'filterBy' . studly_case($key);
+        return 'filterBy' . Str::studly($key);
     }
 
     private function addAppendsToModel($result)
